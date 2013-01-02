@@ -23,8 +23,8 @@
 #   Version history can be found at 
 #   http://code.google.com/p/drcontrol/wiki/VersionHistory
 #
-#   $Rev: 25 $
-#   $Date: 2012-12-27 13:58:48 +0100 (Thu, 27 Dec 2012) $
+#   $Rev: 47 $
+#   $Date: 2013-01-02 16:37:44 +0100 (Wed, 02 Jan 2013) $
 #
 # ----------------------------------------------------------------------------
 
@@ -32,6 +32,8 @@ from optparse import OptionParser
 
 from pylibftdi import Driver
 from pylibftdi import BitBangDevice
+
+from ctypes.util import find_library
 
 import sys
 import time
@@ -44,9 +46,9 @@ class app_data:
     def __init__(
         self,
         name = "DRControl",
-        version = "0.1",
-        date = "$Date: 2012-12-27 13:58:48 +0100 (Thu, 27 Dec 2012) $",
-        rev = "$Rev: 25 $",
+        version = "0.11",
+        date = "$Date: 2013-01-02 16:37:44 +0100 (Wed, 02 Jan 2013) $",
+        rev = "$Rev: 47 $",
         author = "Sebastian Sjoholm"
         ):
 
@@ -61,13 +63,13 @@ class cmdarg_data:
         self,
         device = "",
         relay = "",
-        state = "",
+        command = "",
         verbose = False
         ):
 
         self.device = device
         self.relay = relay
-        self.state = state
+        self.command = command
         self.verbose = verbose
 
 class relay_data(dict):
@@ -76,11 +78,35 @@ class relay_data(dict):
             "1":"2",
             "2":"8",
             "3":"20",
-            "4":"80"
+            "4":"80",
+            "5":"1",
+            "6":"4",
+            "7":"10",
+            "8":"40",
+            "all":"FF"
             }
 
     def __getitem__(self, key): return self[key]
     def keys(self): return self.keys()
+
+# ----------------------------------------------------------------------------
+# testBit() returns a nonzero result, 2**offset, if the bit at 'offset' is one.
+# http://wiki.python.org/moin/BitManipulation
+# ----------------------------------------------------------------------------
+
+def testBit(int_type, offset):
+    mask = 1 << offset
+    return(int_type & mask)
+
+def get_relay_state( data, relay ):
+    if relay == "1":
+        return testBit(data, 1)
+    if relay == "2":
+        return testBit(data, 3)
+    if relay == "3":
+        return testBit(data, 5)
+    if relay == "4":
+        return testBit(data, 7)
 
 # ----------------------------------------------------------------------------
 # LIST_DEVICES()
@@ -105,26 +131,40 @@ def list_devices():
 def set_relay():
 
     if cmdarg.verbose:
-        print "Device: " + cmdarg.device
-        print "Relay: " + cmdarg.relay + " (0x" + relay.address[cmdarg.relay] + ")"
-        print "State: " + cmdarg.state
+        print "Device:\t\t" + cmdarg.device
+        print "Send command:\tRelay " + cmdarg.relay + " (0x" + relay.address[cmdarg.relay] + ") to " + cmdarg.command.upper()
 
     try:
         with BitBangDevice(cmdarg.device) as bb:
 
-            if cmdarg.verbose:
-                print "Current state: " + bb.port
-
-            if cmdarg.state == "on":
+            # Turn relay ON
+            if cmdarg.command == "on":
+                if cmdarg.verbose:
+                    print "Relay " + str(cmdarg.relay) + " to ON"
                 bb.port |= int(relay.address[cmdarg.relay], 16)
-            elif cmdarg.state == "off":
+
+            # Turn relay OFF
+            elif cmdarg.command == "off":
+                if cmdarg.verbose:
+                    print "Relay "  + str(cmdarg.relay) + " to OFF"
                 bb.port &= ~int(relay.address[cmdarg.relay], 16)
 
-            if cmdarg.verbose:
-                print "Current state: " + bb.port
+            # Print relay status
+            elif cmdarg.command == "state":
+                state = get_relay_state( bb.port, cmdarg.relay )
+                if state == 0:
+                    if cmdarg.verbose:
+                        print "Relay " + cmdarg.relay + " state:\tOFF (" + str(state) + ")"
+                    else:
+                        print "OFF"
+                else:
+                    if cmdarg.verbose:
+                        print "Relay " + cmdarg.relay + " state:\tON (" + str(state) + ")"
+                    else:
+                        print "ON"
 
-    except:
-        print "Error: Problem with device, or device not exists"
+    except Exception, err:
+        print "Error: " + str(err)
         sys.exit(1)
 
 def check():
@@ -134,8 +174,11 @@ def check():
         print "Error: Your Python need to be 2.6 or newer"
         sys.exit(1)
 
-    # Check availability on library
-
+    # Check availability on library, this check is also done in pylibftdi
+    ftdi_lib = find_library('ftdi')
+    if ftdi_lib is None:
+        print "Error: The pylibftdi library not found"
+        sys.exit(1)
 
 if __name__ == '__main__':
 
@@ -150,8 +193,8 @@ if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option("-d", "--device", action="store", type="string", dest="device", help="The device serial, example A6VV5PHY")
     parser.add_option("-l", "--list", action="store_true", dest="list", default=False, help="List all devices")
-    parser.add_option("-r", "--relay", action="store", type="string", dest="relay", help="Relay to command by number")
-    parser.add_option("-s", "--state", action="store", type="string", dest="state", help="State: on or off")
+    parser.add_option("-r", "--relay", action="store", type="string", dest="relay", help="Relay to command by number: 1...8 or all")
+    parser.add_option("-c", "--command", action="store", type="string", dest="command", help="State: on, off, state")
     parser.add_option("-v", "--verbose", action="store_true", dest="verbose", default=False, help="Verbose, print all info on screen")
 
     (options, args) = parser.parse_args()
@@ -159,22 +202,28 @@ if __name__ == '__main__':
     if options.verbose:
         cmdarg.verbose = options.verbose
         print app.name + " " + app.version
+    else:
+        cmdarg.verbose = False
 
     if options.list:
         list_devices()
         sys.exit(0)
 
+    if options.relay or options.command:
+        if not options.device:
+            print "Error: Device missing"
+
     if options.device:
         if not options.relay:
             print "Error: Need to state which relay"
             sys.exit(1)
-        if not options.state:
+        if not options.command:
             print "Error: Need to specify which relay state"
             sys.exit(1)
 
         cmdarg.device = options.device
         cmdarg.relay = options.relay
-        cmdarg.state = options.state
+        cmdarg.command = options.command
 
         set_relay()
         sys.exit(0)
