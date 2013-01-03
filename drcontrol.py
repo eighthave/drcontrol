@@ -23,8 +23,8 @@
 #   Version history can be found at 
 #   http://code.google.com/p/drcontrol/wiki/VersionHistory
 #
-#   $Rev: 52 $
-#   $Date: 2013-01-03 11:26:47 +0100 (Thu, 03 Jan 2013) $
+#   $Rev: 53 $
+#   $Date: 2013-01-03 18:13:01 +0100 (Thu, 03 Jan 2013) $
 #
 # ----------------------------------------------------------------------------
 
@@ -47,8 +47,8 @@ class app_data:
         self,
         name = "DRControl",
         version = "0.12",
-        date = "$Date: 2013-01-03 11:26:47 +0100 (Thu, 03 Jan 2013) $",
-        rev = "$Rev: 52 $",
+        date = "$Date: 2013-01-03 18:13:01 +0100 (Thu, 03 Jan 2013) $",
+        rev = "$Rev: 53 $",
         author = "Sebastian Sjoholm"
         ):
 
@@ -144,9 +144,9 @@ def set_relay():
 
     try:
         with BitBangDevice(cmdarg.device) as bb:
-
+			
             # Action towards specific relay
-            if cmdarg.relay >= 1 and cmdarg.relay <= 8:
+            if int(cmdarg.relay) >= 1 and int(cmdarg.relay) <= 8:
 
                 # Turn relay ON
                 if cmdarg.command == "on":
