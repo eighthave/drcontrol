@@ -119,13 +119,11 @@ def get_relay_state( data, relay ):
 # ----------------------------------------------------------------------------
 
 def list_devices():
-    print("Vendor\t\tProduct\t\t\tSerial")
+    print('%-12s' % 'Vendor', '%-35s' % 'Product', '%-25s' % 'Serial', sep='\t')
+    print('--------------------------------------------------------------------')
     dev_list = []
-    for device in Driver().list_devices():
-        device = map(lambda x: x.decode('latin1'), device)
-        vendor, product, serial = device
-        #print "%s\t\t%s\t\t%s" % (vendor, product, serial)
-        print(vendor, "\t" , product, "\t", serial)
+    for vendor, product, serial in Driver().list_devices():
+        print('%-12s' % vendor, '%-35s' % product, '%-25s' % serial, sep='\t')
 
 # ----------------------------------------------------------------------------
 # SET_RELAY()
