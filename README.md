@@ -1,4 +1,6 @@
+
 # drcontrol
+
 Python drcontrol forked from https://code.google.com/p/drcontrol/
 
 DRControl is Python script that controls the USB Relay board from Denkovi http://www.denkovi.com.
@@ -11,11 +13,14 @@ DRControl is Python script that controls the USB Relay board from Denkovi http:/
 - Denkovi 4 USB Relay Board, product code DAE-CB/Ro4-USB
 
 ## Notes
+
 The DRControl will always show all 8 relays even if the connected board is an 4 USB Relay Board. There is no way at the current time to identify if the board is 4 or 8 USB Relay Board.
 
 ## drcontrol.py
 
+
 ### Options
+
 | Option |           Description           |
 |:------:|:--------------------------------|
 |   -d   | Device                          |
@@ -32,11 +37,16 @@ Address the relay board with the serial number of the FTDI device, this can be l
 
 Example below is two devices listed, the "FT245R USB FIFO" is the relay board (4 x USB Board) which is then used the serial "A6VV5PHY" to show the state of the relay 1.
 
-```
-$ ./drcontrol.py -l Vendor Product Serial RFXCOM RFXtrx433 03VHG0NE FTDI FT245R USB FIFO A6VV5PHY 
-$ ./drcontrol.py -d A6VV5PHY -r 1 -c state ON 
+```console
+$ ./drcontrol.py -l
+ Vendor        Product            Serial
+ RFXCOM        RFXtrx433          03VHG0NE
+ FTDI          FT245R USB FIFO    A6VV5PHY
+$ ./drcontrol.py -d A6VV5PHY -r 1 -c state ON
 $
 ```
+
+
 ### Relay (-r)
 
 `option -r <1..8|all>`
@@ -74,23 +84,29 @@ STATE = To show the current state of the relay
 
 Command is not case sensitive
 
-Example
-```
-$ ./drcontrol.py -d A6VV5PHY -r 1 -c state ON $ ./drcontrol.py -d A6VV5PHY -r 1 -c off 
+Example:
+
+```console
+$ ./drcontrol.py -d A6VV5PHY -r 1 -c state ON
+$ ./drcontrol.py -d A6VV5PHY -r 1 -c off
 $ ./drcontrol.py -d A6VV5PHY -r 1 -c state OFF
-$ ./drcontrol.py -d A6VV5PHY -r 1 -c on $ ./drcontrol.py -d A6VV5PHY -r 1 -c state ON 
+$ ./drcontrol.py -d A6VV5PHY -r 1 -c on
+$ ./drcontrol.py -d A6VV5PHY -r 1 -c state ON
 $
 ```
 
 ### List devices (-l)
 
-option -l
+`option -l`
 
 List all FTDI devices on the system.
 
 Example
 ```
-$ ./drcontrol.py -l Vendor Product Serial RFXCOM RFXtrx433 03VHG0NE FTDI FT245R USB FIFO A6VV5PHY 
+$ ./drcontrol.py -l
+   Vendor         Product            Serial
+   RFXCOM         RFXtrx433          03VHG0NE
+   FTDI           FT245R USB FIFO    A6VV5PHY
 $
 ```
 
@@ -100,8 +116,9 @@ $
 
 Give verbose printouts of all commands.
 
-Example
-```
+Example;
+
+```console
 $ ./drcontrol.py -d A6VV5PHY -r 1 -c state -v 
 DRControl 0.11 
 Device: A6VV5PHY 
@@ -119,9 +136,12 @@ Send command: Relay 1 (0x2) to STATE
 Relay 1 state: OFF (0) 
 $
 ```
+
+
 ## Info
 
 The USB 4 relay board is a product from Denkovi Assembly Electronics ltd
+
 
 ## Copyright
 
